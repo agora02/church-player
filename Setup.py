@@ -49,6 +49,17 @@ class InstallerAPI:
     def get_default_dir(self):
         return DEFAULT_INSTALL_DIR
 
+    def choose_folder(self):
+        if not self.window:
+            return ""
+        result = self.window.create_file_dialog(webview.FOLDER_DIALOG)
+        if result and len(result) > 0:
+            folder = result[0]
+            if not folder.endswith("ChurchPlayer"):
+                folder = os.path.join(folder, "ChurchPlayer")
+            return folder
+        return ""
+
     def close(self):
         if self.window:
             self.window.destroy()
@@ -56,7 +67,7 @@ class InstallerAPI:
     def start_install(self, options):
         def worker():
             try:
-                target_dir = options.get('install_dir', DEFAULT_INSTALL_DIR)
+                target_dir = options.get('install_dir') or DEFAULT_INSTALL_DIR
                 create_desktop = options.get('create_desktop', True)
                 create_startmenu = options.get('create_startmenu', True)
                 run_after = options.get('run_after', True)
@@ -113,8 +124,8 @@ def main():
         title="Church Media Master 설치 마법사",
         url=html_url,
         js_api=api,
-        width=520,
-        height=400,
+        width=540,
+        height=450,
         resizable=False,
         background_color="#0b0d14"
     )

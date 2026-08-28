@@ -9,9 +9,8 @@
     :root {
       --bg: #0b0d14;
       --card: rgba(18, 24, 38, 0.85);
-      --border: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.09);
       --accent: #3b82f6;
-      --accent-glow: #6366f1;
       --text: #f8fafc;
       --muted: #94a3b8;
       --dim: #64748b;
@@ -27,17 +26,17 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 24px;
+      padding: 22px 24px;
     }
 
     .ambient-glow {
       position: absolute;
-      top: -20%;
-      left: 20%;
-      width: 60%;
-      height: 60%;
-      background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
-      filter: blur(40px);
+      top: -30%;
+      left: 10%;
+      width: 80%;
+      height: 70%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+      filter: blur(50px);
       pointer-events: none;
       z-index: 0;
     }
@@ -47,23 +46,23 @@
       z-index: 1;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     /* Header */
     .header-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
     .logo-img {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
+      width: 52px;
+      height: 52px;
+      border-radius: 13px;
       box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
     }
     .header-text h1 {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       letter-spacing: -0.01em;
       color: #ffffff;
@@ -85,6 +84,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     }
     .field-label {
       font-size: 10px;
@@ -92,16 +92,36 @@
       color: var(--dim);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .path-row {
+      display: flex;
+      gap: 8px;
     }
     .path-input {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.3);
+      flex: 1;
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 12px;
+      padding: 7px 10px;
       color: #ffffff;
       font-size: 11px;
       outline: none;
+    }
+    .btn-browse {
+      padding: 7px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 160ms var(--ease);
+    }
+    .btn-browse:hover {
+      background: rgba(255, 255, 255, 0.12);
     }
 
     /* Options */
@@ -109,22 +129,23 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
     .option-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text);
       cursor: pointer;
     }
     .apple-switch {
       appearance: none;
       -webkit-appearance: none;
-      width: 36px;
-      height: 20px;
-      background: rgba(255, 255, 255, 0.12);
+      width: 34px;
+      height: 19px;
+      background: rgba(255, 255, 255, 0.14);
       border-radius: 20px;
       position: relative;
       outline: none;
@@ -137,8 +158,8 @@
     .apple-switch::before {
       content: '';
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: #ffffff;
       top: 2px;
@@ -147,15 +168,16 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .apple-switch:checked::before {
-      transform: translateX(16px);
+      transform: translateX(15px);
     }
 
     /* Progress Area */
     .progress-box {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-top: 4px;
+      gap: 5px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
     .progress-track {
       width: 100%;
@@ -172,7 +194,7 @@
       transition: width 200ms var(--ease);
     }
     .status-text {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--muted);
     }
 
@@ -184,9 +206,10 @@
       align-items: center;
       justify-content: flex-end;
       gap: 10px;
+      margin-top: 10px;
     }
     .btn-secondary {
-      padding: 9px 16px;
+      padding: 8px 16px;
       border-radius: 9px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
@@ -201,7 +224,7 @@
       color: #ffffff;
     }
     .btn-primary {
-      padding: 9px 20px;
+      padding: 8px 22px;
       border-radius: 9px;
       background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -242,7 +265,10 @@
     <div class="glass-card">
       <div>
         <label class="field-label">설치 경로</label>
-        <input type="text" id="txtInstallDir" class="path-input" readonly>
+        <div class="path-row">
+          <input type="text" id="txtInstallDir" class="path-input" placeholder="기본 설치 경로 로드 중...">
+          <button id="btnBrowse" class="btn-browse" title="폴더 찾아보기">📁 변경</button>
+        </div>
       </div>
 
       <div class="options-group">
@@ -276,8 +302,19 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function initDir() {
       const txtInstallDir = document.getElementById('txtInstallDir');
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.get_default_dir) {
+        try {
+          const dir = await window.pywebview.api.get_default_dir();
+          if (dir) txtInstallDir.value = dir;
+        } catch (e) {}
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const txtInstallDir = document.getElementById('txtInstallDir');
+      const btnBrowse = document.getElementById('btnBrowse');
       const chkDesktop = document.getElementById('chkDesktop');
       const chkStartMenu = document.getElementById('chkStartMenu');
       const chkRunAfter = document.getElementById('chkRunAfter');
@@ -286,10 +323,15 @@
       const progressFill = document.getElementById('progressFill');
       const statusText = document.getElementById('statusText');
 
-      if (window.pywebview && window.pywebview.api) {
-        const defaultDir = await window.pywebview.api.get_default_dir();
-        txtInstallDir.value = defaultDir;
-      }
+      window.addEventListener('pywebviewready', initDir);
+      setTimeout(initDir, 300);
+
+      btnBrowse.onclick = async () => {
+        if (window.pywebview && window.pywebview.api && window.pywebview.api.choose_folder) {
+          const chosen = await window.pywebview.api.choose_folder();
+          if (chosen) txtInstallDir.value = chosen;
+        }
+      };
 
       btnCancel.onclick = () => {
         if (window.pywebview && window.pywebview.api) {
@@ -301,6 +343,7 @@
         btnInstall.disabled = true;
         btnInstall.textContent = '설치 진행 중...';
         btnCancel.disabled = true;
+        btnBrowse.disabled = true;
 
         if (window.pywebview && window.pywebview.api) {
           await window.pywebview.api.start_install({
@@ -312,7 +355,6 @@
         }
       };
 
-      // Progress listener called from Python
       window.updateProgress = (percent, msg) => {
         progressFill.style.width = percent + '%';
         statusText.textContent = msg;
