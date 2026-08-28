@@ -443,13 +443,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleSelectedFiles(files) {
     if (!files || files.length === 0) return;
+    const audioExts = ['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg', '.wma', '.mid', '.midi'];
     for (const f of files) {
-      const name = typeof f === 'string' ? f.split(/[\\\\/]/).pop() : f.name;
-      const isAudio = /\\.(mp3|wav|flac|aac|m4a|ogg)$/i.test(name);
+      const rawPath = typeof f === 'string' ? f : (f.path || f.name);
+      const name = rawPath.split(/[\\/]/).pop();
+      const dotIdx = name.lastIndexOf('.');
+      const ext = dotIdx !== -1 ? name.slice(dotIdx).toLowerCase() : '';
+      const isAudio = audioExts.includes(ext);
+      const title = dotIdx !== -1 ? name.slice(0, dotIdx) : name;
       const url = typeof f === 'string' ? f : URL.createObjectURL(f);
       playlist.push({
         name: name,
-        title: name.replace(/\\.[^/.]+$/, ''),
+        title: title,
         type: isAudio ? 'audio' : 'video',
         url: url
       });
