@@ -74,13 +74,19 @@ def check_update_sync(api_url=GITHUB_REPO_API):
     }
 
 def apply_update_script(zip_path, target_dir):
-    """Creates a temporary batch file to extract and replace the application."""
+    """Cleanly terminates existing process, replaces application and starts the new version."""
     bat_content = f"""@echo off
 chcp 65001 > nul
-timeout /t 2 /nobreak > nul
-echo Church Media Master 최신 버전으로 업데이트 중...
-powershell -Command "Expand-Archive -Path '{zip_path}' -DestinationPath '{target_dir}' -Force"
-del /f /q "{zip_path}"
+title Church Media Master Update
+echo ==========================================
+echo Church Media Master 최신 버전으로 교체 중...
+echo ==========================================
+taskkill /F /IM ChurchPlayer.exe > nul 2>&1
+timeout /t 1 /nobreak > nul
+
+powershell -NoProfile -Command "Expand-Archive -Path '{zip_path}' -DestinationPath '{target_dir}' -Force"
+del /f /q "{zip_path}" > nul 2>&1
+
 start "" "{os.path.join(target_dir, 'ChurchPlayer.exe')}"
 del "%~f0"
 exit
@@ -90,4 +96,5 @@ exit
         f.write(bat_content)
     
     subprocess.Popen(['cmd.exe', '/c', temp_bat], shell=False)
-    sys.exit(0)
+    # Immediately terminate the current process so old window closes instantly
+    os._exit(0)
