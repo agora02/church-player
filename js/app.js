@@ -100,6 +100,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let pendingDownloadUrl = null;
 
+  // Dynamically load version from native API
+  async function loadAppVersion() {
+    if (window.pywebview && window.pywebview.api && window.pywebview.api.get_version) {
+      try {
+        const v = await window.pywebview.api.get_version();
+        if (v) {
+          btnCheckUpdate.textContent = `v${v} ✨`;
+        }
+      } catch (e) {}
+    }
+  }
+  window.addEventListener('pywebviewready', loadAppVersion);
+  setTimeout(loadAppVersion, 300);
+
   async function checkUpdate(manual = false) {
     if (window.pywebview && window.pywebview.api && window.pywebview.api.check_for_updates) {
       try {
@@ -107,11 +121,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (info && info.has_update) {
           pendingDownloadUrl = info.download_url;
           updateTitle.textContent = '새로운 버전이 출시되었습니다!';
-          updateVersionText.textContent = `최신 버전: ${info.latest_version} (현재 ${info.current_version})`;
+          updateVersionText.textContent = `최신 버전: ${info.latest_version} (현재 v${info.current_version})`;
           updateNotes.textContent = info.release_notes || '신규 기능 및 성능 개선이 포함되어 있습니다.';
           updateModal.classList.remove('hidden');
         } else if (manual) {
-          alert('현재 최신 버전(v2.0.0)을 사용 중입니다.');
+          alert(`현재 최신 버전(v${info ? info.current_version : '2.1.0'})을 사용 중입니다.`);
         }
       } catch (e) {
         if (manual) alert('업데이트 서버와 연결할 수 없습니다. 오프라인 상태입니다.');
