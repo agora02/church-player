@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church Media Master 설치 마법사</title>
+  <link rel="icon" type="image/png" href="app_icon.png">
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --card: rgba(18, 24, 38, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #3b82f6;
+      --accent-glow: #6366f1;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", "Malgun Gothic", sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+    }
+
+    .ambient-glow {
+      position: absolute;
+      top: -20%;
+      left: 20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+      filter: blur(40px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .installer-container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+    }
+    .header-text h1 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+    }
+    .header-text p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Form Card */
+    .glass-card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .field-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .path-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #ffffff;
+      font-size: 11px;
+      outline: none;
+    }
+
+    /* Options */
+    .options-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .option-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .apple-switch {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 36px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      position: relative;
+      outline: none;
+      cursor: pointer;
+      transition: background 200ms var(--ease);
+    }
+    .apple-switch:checked {
+      background: var(--accent);
+    }
+    .apple-switch::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      top: 2px;
+      left: 2px;
+      transition: transform 200ms var(--ease);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .apple-switch:checked::before {
+      transform: translateX(16px);
+    }
+
+    /* Progress Area */
+    .progress-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #3b82f6, #818cf8);
+      border-radius: 3px;
+      transition: width 200ms var(--ease);
+    }
+    .status-text {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Footer Actions */
+    .footer-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn-secondary {
+      padding: 9px 16px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 160ms var(--ease);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+    .btn-primary {
+      padding: 9px 20px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+    }
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <div class="installer-container">
+    <!-- Header -->
+    <div class="header-row">
+      <img src="app_icon.png" alt="Church Media Logo" class="logo-img">
+      <div class="header-text">
+        <h1>Church Media Master Pro</h1>
+        <p>스마트 예배 & 미디어 방송 통합 콘솔 v2.0.0 설치</p>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="glass-card">
+      <div>
+        <label class="field-label">설치 경로</label>
+        <input type="text" id="txtInstallDir" class="path-input" readonly>
+      </div>
+
+      <div class="options-group">
+        <label class="option-row">
+          <span>바탕화면에 바로가기 아이콘 생성</span>
+          <input type="checkbox" id="chkDesktop" checked class="apple-switch">
+        </label>
+        <label class="option-row">
+          <span>시작 메뉴에 프로그램 등록</span>
+          <input type="checkbox" id="chkStartMenu" checked class="apple-switch">
+        </label>
+        <label class="option-row">
+          <span>설치 완료 후 프로그램 바로 실행</span>
+          <input type="checkbox" id="chkRunAfter" checked class="apple-switch">
+        </label>
+      </div>
+
+      <div class="progress-box">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="status-text" id="statusText">설치 준비 완료. [설치 시작]을 클릭하세요.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="footer-actions">
+    <button id="btnCancel" class="btn-secondary">취소</button>
+    <button id="btnInstall" class="btn-primary">🚀 설치 시작</button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const txtInstallDir = document.getElementById('txtInstallDir');
+      const chkDesktop = document.getElementById('chkDesktop');
+      const chkStartMenu = document.getElementById('chkStartMenu');
+      const chkRunAfter = document.getElementById('chkRunAfter');
+      const btnInstall = document.getElementById('btnInstall');
+      const btnCancel = document.getElementById('btnCancel');
+      const progressFill = document.getElementById('progressFill');
+      const statusText = document.getElementById('statusText');
+
+      if (window.pywebview && window.pywebview.api) {
+        const defaultDir = await window.pywebview.api.get_default_dir();
+        txtInstallDir.value = defaultDir;
+      }
+
+      btnCancel.onclick = () => {
+        if (window.pywebview && window.pywebview.api) {
+          window.pywebview.api.close();
+        }
+      };
+
+      btnInstall.onclick = async () => {
+        btnInstall.disabled = true;
+        btnInstall.textContent = '설치 진행 중...';
+        btnCancel.disabled = true;
+
+        if (window.pywebview && window.pywebview.api) {
+          await window.pywebview.api.start_install({
+            install_dir: txtInstallDir.value,
+            create_desktop: chkDesktop.checked,
+            create_startmenu: chkStartMenu.checked,
+            run_after: chkRunAfter.checked
+          });
+        }
+      };
+
+      // Progress listener called from Python
+      window.updateProgress = (percent, msg) => {
+        progressFill.style.width = percent + '%';
+        statusText.textContent = msg;
+        if (percent >= 100) {
+          statusText.style.color = '#38bdf8';
+          btnInstall.textContent = '🎉 완료됨';
+        }
+      };
+    });
+  </script>
+</body>
+</html>
