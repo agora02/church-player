@@ -14,8 +14,15 @@ import zipfile
 import shutil
 import ssl
 
-CURRENT_VERSION = "2.1.0"
+CURRENT_VERSION = "2.2.0"
 GITHUB_REPO_API = "https://api.github.com/repos/agora02/church-player/releases/latest"
+
+def parse_ver(v_str):
+    try:
+        clean = v_str.lstrip('v').strip()
+        return tuple(map(int, clean.split('.')))
+    except Exception:
+        return (0, 0, 0)
 
 def get_current_version():
     return CURRENT_VERSION
@@ -48,7 +55,7 @@ def check_update_sync(api_url=GITHUB_REPO_API):
                         download_url = asset.get('browser_download_url')
                         break
 
-            if latest_tag and latest_tag > CURRENT_VERSION:
+            if parse_ver(latest_tag) > parse_ver(CURRENT_VERSION):
                 return {
                     'has_update': True,
                     'current_version': CURRENT_VERSION,

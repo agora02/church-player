@@ -17,7 +17,7 @@ import webview
 APP_NAME = "Church Media Master"
 APP_DISPLAY_NAME = "Church Media Master Pro"
 APP_EXE = "ChurchPlayer.exe"
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 REG_UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ChurchMediaMaster"
 DEFAULT_INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Programs", "ChurchPlayer")
 
@@ -167,7 +167,9 @@ class InstallerAPI:
                 time.sleep(0.3)
 
                 os.makedirs(target_dir, exist_ok=True)
-                zip_src = get_resource_path("ChurchPlayer_v2.1.0.zip")
+                zip_src = get_resource_path("ChurchPlayer_v2.2.0.zip")
+                if not os.path.exists(zip_src):
+                    zip_src = get_resource_path("ChurchPlayer_v2.1.0.zip")
                 if not os.path.exists(zip_src):
                     zip_src = get_resource_path("ChurchPlayer_v2.0.0.zip")
 
