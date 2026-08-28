@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Church Media Master - Ultra Modern Glassmorphic Installer & Uninstaller
-Powered by Edge WebView2 & Emil Kowalski Design Engineering
+Church Media Master - Official Windows Installer & Uninstaller
+Registers to Windows Installed Apps (Settings > Apps > Installed Apps / Control Panel)
 """
 
 import os
@@ -11,10 +11,14 @@ import subprocess
 import threading
 import time
 import shutil
+import winreg
 import webview
 
 APP_NAME = "Church Media Master"
+APP_DISPLAY_NAME = "Church Media Master Pro"
 APP_EXE = "ChurchPlayer.exe"
+APP_VERSION = "2.1.0"
+REG_UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\ChurchMediaMaster"
 DEFAULT_INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "Programs", "ChurchPlayer")
 
 def get_resource_path(relative_path):
@@ -67,6 +71,62 @@ def create_shortcut(target_path, shortcut_path, icon_path, working_dir):
     except Exception as e:
         print("Shortcut creation error:", e)
 
+def register_windows_app(install_dir, exe_path, icon_path):
+    """Registers app in Windows Settings > Installed Apps & Control Panel."""
+    try:
+        uninstall_cmd = f'"{os.path.join(install_dir, "uninstall.bat")}"'
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_UNINSTALL_KEY) as key:
+            winreg.SetValueEx(key, 'DisplayName', 0, winreg.REG_SZ, APP_DISPLAY_NAME)
+            winreg.SetValueEx(key, 'DisplayVersion', 0, winreg.REG_SZ, APP_VERSION)
+            winreg.SetValueEx(key, 'Publisher', 0, winreg.REG_SZ, 'Church Media')
+            winreg.SetValueEx(key, 'InstallLocation', 0, winreg.REG_SZ, install_dir)
+            winreg.SetValueEx(key, 'DisplayIcon', 0, winreg.REG_SZ, icon_path)
+            winreg.SetValueEx(key, 'UninstallString', 0, winreg.REG_SZ, uninstall_cmd)
+            winreg.SetValueEx(key, 'EstimatedSize', 0, winreg.REG_DWORD, 36000)
+            winreg.SetValueEx(key, 'NoModify', 0, winreg.REG_DWORD, 1)
+            winreg.SetValueEx(key, 'NoRepair', 0, winreg.REG_DWORD, 1)
+    except Exception as e:
+        print("Registry registration error:", e)
+
+def unregister_windows_app():
+    """Removes app from Windows Installed Apps registry."""
+    try:
+        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, REG_UNINSTALL_KEY)
+    except Exception:
+        pass
+
+def create_uninstaller_script(install_dir):
+    """Generates the official uninstall.bat inside install directory."""
+    desktop = get_real_desktop_path()
+    start_menu = get_real_startmenu_path()
+    
+    script = f"""@echo off
+chcp 65001 > nul
+title Church Media Master 삭제
+echo ========================================================
+echo   Church Media Master를 컴퓨터에서 삭제하는 중입니다...
+echo ========================================================
+timeout /t 1 /nobreak > nul
+
+taskkill /F /IM {APP_EXE} > nul 2>&1
+
+del /f /q "{os.path.join(desktop, f'{APP_NAME}.lnk')}" > nul 2>&1
+del /f /q "{os.path.join(start_menu, f'{APP_NAME}.lnk')}" > nul 2>&1
+
+powershell -NoProfile -Command "Remove-Item -Path 'HKCU:\\{REG_UNINSTALL_KEY}' -Recurse -Force -ErrorAction SilentlyContinue"
+
+cd /d "%TEMP%"
+powershell -NoProfile -Command "Start-Sleep -Seconds 1; Remove-Item -Path '{install_dir}' -Recurse -Force -ErrorAction SilentlyContinue"
+
+echo.
+echo 삭제가 완료되었습니다.
+timeout /t 2 /nobreak > nul
+exit
+"""
+    uninst_path = os.path.join(install_dir, "uninstall.bat")
+    with open(uninst_path, "w", encoding="cp949", errors="replace") as f:
+        f.write(script)
+
 class InstallerAPI:
     def __init__(self):
         self.window = None
@@ -102,7 +162,7 @@ class InstallerAPI:
                 create_startmenu = options.get('create_startmenu', True)
                 run_after = options.get('run_after', True)
 
-                # Terminate running app before overwrite/install
+                # Terminate running app
                 subprocess.run(["taskkill", "/F", "/IM", APP_EXE], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 time.sleep(0.3)
 
@@ -112,7 +172,7 @@ class InstallerAPI:
                     zip_src = get_resource_path("ChurchPlayer_v2.0.0.zip")
 
                 self.window.evaluate_js("updateProgress(10, '프로그램 파일 압축 해제 중...')")
-                time.sleep(0.3)
+                time.sleep(0.2)
 
                 with zipfile.ZipFile(zip_src, "r") as z:
                     file_list = z.infolist()
@@ -120,29 +180,31 @@ class InstallerAPI:
                     for idx, finfo in enumerate(file_list):
                         z.extract(finfo, target_dir)
                         if idx % 10 == 0 or idx == total - 1:
-                            pct = 10 + int((idx / total) * 70)
+                            pct = 10 + int((idx / total) * 65)
                             self.window.evaluate_js(f"updateProgress({pct}, '파일 복사 중 ({idx + 1}/{total})...')")
 
-                self.window.evaluate_js("updateProgress(85, '바탕화면 및 시작 메뉴 바로가기 생성 중...')")
+                self.window.evaluate_js("updateProgress(80, '바탕화면 및 시작 메뉴 바로가기 등록 중...')")
                 exe_path = os.path.join(target_dir, APP_EXE)
                 icon_path = os.path.join(target_dir, "app_icon.ico")
                 if not os.path.exists(icon_path):
                     icon_path = exe_path
 
-                # Real Desktop Shortcut
                 if create_desktop:
                     desktop = get_real_desktop_path()
                     sc_path = os.path.join(desktop, f"{APP_NAME}.lnk")
                     create_shortcut(exe_path, sc_path, icon_path, target_dir)
 
-                # Real Start Menu Shortcut
                 if create_startmenu:
                     start_menu = get_real_startmenu_path()
                     os.makedirs(start_menu, exist_ok=True)
                     sc_path = os.path.join(start_menu, f"{APP_NAME}.lnk")
                     create_shortcut(exe_path, sc_path, icon_path, target_dir)
 
-                self.window.evaluate_js("updateProgress(100, '🎉 설치 및 업데이트가 완료되었습니다!')")
+                self.window.evaluate_js("updateProgress(90, 'Windows 정식 설치 프로그램 등록 중...')")
+                create_uninstaller_script(target_dir)
+                register_windows_app(target_dir, exe_path, icon_path)
+
+                self.window.evaluate_js("updateProgress(100, '🎉 윈도우 정식 앱 설치가 완료되었습니다!')")
                 time.sleep(1.2)
 
                 if run_after:
@@ -162,7 +224,7 @@ class InstallerAPI:
                 subprocess.run(["taskkill", "/F", "/IM", APP_EXE], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 time.sleep(0.5)
 
-                self.window.evaluate_js("updateProgress(50, '바로가기 아이콘 제거 중...')")
+                self.window.evaluate_js("updateProgress(50, '바로가기 및 윈도우 앱 등록 정보 제거 중...')")
                 desktop = get_real_desktop_path()
                 sc_desktop = os.path.join(desktop, f"{APP_NAME}.lnk")
                 if os.path.exists(sc_desktop):
@@ -174,6 +236,8 @@ class InstallerAPI:
                 if os.path.exists(sc_start):
                     try: os.remove(sc_start)
                     except Exception: pass
+
+                unregister_windows_app()
 
                 self.window.evaluate_js("updateProgress(75, '프로그램 파일 삭제 중...')")
                 if os.path.exists(dest_dir):
@@ -188,6 +252,11 @@ class InstallerAPI:
         threading.Thread(target=worker, daemon=True).start()
 
 def main():
+    # If run with /uninstall argument
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ['/uninstall', '-uninstall', '/u']:
+        unregister_windows_app()
+        return
+
     html_path = get_resource_path("installer.html")
     html_url = f"file:///{html_path.replace(os.sep, '/')}"
 
