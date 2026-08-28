@@ -383,6 +383,11 @@ body.studio-app {
   height: 13px;
 }
 
+.studio-sidebar.drag-over {
+  border-color: var(--accent-blue);
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
 .sidebar-options {
   display: flex;
   flex-direction: column;
@@ -401,9 +406,36 @@ body.studio-app {
   color: var(--text-muted);
   cursor: pointer;
 }
-.apple-switch {
-  accent-color: var(--accent-blue);
+.sidebar-options .apple-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 34px;
+  height: 19px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  position: relative;
+  outline: none;
   cursor: pointer;
+  transition: background 200ms var(--ease-out);
+  flex-shrink: 0;
+}
+.sidebar-options .apple-switch:checked {
+  background: var(--accent-blue);
+}
+.sidebar-options .apple-switch::before {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ffffff;
+  top: 2px;
+  left: 2px;
+  transition: transform 200ms var(--ease-out);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.sidebar-options .apple-switch:checked::before {
+  transform: translateX(15px);
 }
 
 .queue-scroll-area {
@@ -611,7 +643,8 @@ body.studio-app {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.cinema-blackout-screen {
+.cinema-blackout-screen,
+.blackout-screen {
   position: absolute;
   inset: 0;
   background-color: #000000;
@@ -640,7 +673,7 @@ body.studio-app {
   gap: 12px;
 }
 .time-stamp {
-  font-family: monospace;
+  font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
@@ -659,7 +692,13 @@ body.studio-app {
   appearance: none;
   width: 100%;
   height: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    to right,
+    var(--accent-blue) 0%,
+    var(--accent-blue) var(--progress, 0%),
+    rgba(255, 255, 255, 0.12) var(--progress, 0%),
+    rgba(255, 255, 255, 0.12) 100%
+  );
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -710,7 +749,7 @@ body.studio-app {
   transition: all 160ms var(--ease-out);
 }
 .segment-pill.active {
-  background: var(--bg-panel-sub);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
@@ -788,13 +827,34 @@ body.studio-app {
   color: var(--text-dim);
 }
 .vol-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
   width: 70px;
   height: 3px;
-  accent-color: var(--accent-blue);
+  background: linear-gradient(
+    to right,
+    var(--accent-blue) 0%,
+    var(--accent-blue) var(--vol-progress, 100%),
+    rgba(255, 255, 255, 0.12) var(--vol-progress, 100%),
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.vol-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid var(--accent-blue);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 .vol-percent {
-  font-family: monospace;
+  font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
   font-size: 10px;
   color: var(--text-dim);
   min-width: 28px;
@@ -837,7 +897,11 @@ body.studio-app {
   padding: 4px 10px;
   border-radius: 6px;
   cursor: pointer;
-  transition: transform 160ms var(--ease-out);
+  transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), filter 160ms var(--ease-out);
+}
+.btn-cut-action:hover {
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  filter: brightness(1.15);
 }
 .btn-cut-action:active {
   transform: scale(0.95);
@@ -881,7 +945,8 @@ body.studio-app {
 }
 .pvw-filename {
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-muted);
+  font-weight: 600;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;

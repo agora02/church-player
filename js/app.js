@@ -330,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
       lblTotalTime.textContent = formatTime(el.duration);
       if (el.duration > 0) {
         seekSlider.value = (el.currentTime / el.duration) * 100;
+        seekSlider.style.setProperty('--progress', seekSlider.value + '%');
       }
     };
 
@@ -351,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Safe Seeking (0ms sync)
   seekSlider.oninput = () => {
     isSeeking = true;
+    seekSlider.style.setProperty('--progress', seekSlider.value + '%');
     const activeEl = currentMode === 'video' ? pgmVideo : pgmAudio;
     if (activeEl.duration > 0) {
       const previewTime = (seekSlider.value / 100) * activeEl.duration;
@@ -365,6 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeEl.currentTime = targetTime;
       sync.updateState({ currentTime: targetTime });
     }
+    seekSlider.style.setProperty('--progress', seekSlider.value + '%');
     isSeeking = false;
   };
 
@@ -373,11 +376,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = currentMode === 'video' ? pgmVideo : pgmAudio;
     el.currentTime = Math.max(0, el.currentTime - 10);
     sync.updateState({ currentTime: el.currentTime });
+    if (el.duration > 0) {
+      seekSlider.value = (el.currentTime / el.duration) * 100;
+      seekSlider.style.setProperty('--progress', seekSlider.value + '%');
+    }
   };
   btnForward10.onclick = () => {
     const el = currentMode === 'video' ? pgmVideo : pgmAudio;
     el.currentTime = Math.min(el.duration || 0, el.currentTime + 10);
     sync.updateState({ currentTime: el.currentTime });
+    if (el.duration > 0) {
+      seekSlider.value = (el.currentTime / el.duration) * 100;
+      seekSlider.style.setProperty('--progress', seekSlider.value + '%');
+    }
   };
   btnPrevCue.onclick = () => {
     if (currentPgmIndex > 0) cutToPgm(currentPgmIndex - 1, true);
@@ -404,11 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
   volSlider.oninput = () => {
     const vol = volSlider.value / 100;
     lblVolPercent.textContent = `${volSlider.value}%`;
+    volSlider.style.setProperty('--vol-progress', volSlider.value + '%');
     const finalVol = isDucked ? vol * 0.2 : vol;
     pgmVideo.volume = finalVol;
     pgmAudio.volume = finalVol;
     sync.updateState({ volume: finalVol });
   };
+  volSlider.oninput();
 
   // Emergency Switches
   btnDucking.onclick = () => {
@@ -550,10 +563,20 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCueList();
   };
 
-  // Drag & Drop
-  window.addEventListener('dragover', (e) => e.preventDefault());
+  // Drag & Drop with Visual Feedback
+  const studioSidebar = document.querySelector('.studio-sidebar');
+  window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (studioSidebar) studioSidebar.classList.add('drag-over');
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (e.clientX <= 0 || e.clientY <= 0) {
+      if (studioSidebar) studioSidebar.classList.remove('drag-over');
+    }
+  });
   window.addEventListener('drop', (e) => {
     e.preventDefault();
+    if (studioSidebar) studioSidebar.classList.remove('drag-over');
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleSelectedFiles(Array.from(e.dataTransfer.files));
     }
