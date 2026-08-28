@@ -14,7 +14,7 @@ import zipfile
 import shutil
 import ssl
 
-CURRENT_VERSION = "2.2.1"
+CURRENT_VERSION = "2.2.2"
 GITHUB_REPO_API = "https://api.github.com/repos/agora02/church-player/releases/latest"
 
 def parse_ver(v_str):

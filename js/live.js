@@ -64,8 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
         visualizer.setTheme(state.visualizerTheme);
       }
 
-      // 5. Volume
+      // 5. Volume & Unmute for Primary Output
       const targetEl = currentType === 'video' ? liveVideo : liveAudio;
+      targetEl.muted = false;
       if (state.volume !== undefined) {
         targetEl.volume = state.volume;
       }

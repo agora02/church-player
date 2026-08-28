@@ -159,6 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let isLogo = false;
   let isBlackout = false;
   let currentMode = 'video';
+  let isLiveConnected = false;
+
+  function updateAudioRouting() {
+    if (isLiveConnected) {
+      // Live Window is connected: MUTE local controller so ONLY 1 sound output goes to Projector/Mixer
+      pgmVideo.muted = true;
+      pgmAudio.muted = true;
+    } else {
+      // Standalone mode: keep controller unmuted
+      pgmVideo.muted = false;
+      pgmAudio.muted = false;
+    }
+  }
 
   function formatTime(sec) {
     if (isNaN(sec) || sec < 0) return '00:00';
@@ -273,7 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
     pgmBlackout.classList.add('hidden');
 
     const activeEl = currentMode === 'video' ? pgmVideo : pgmAudio;
-    activeEl.volume = isDucked ? (volSlider.value / 100) * 0.2 : (volSlider.value / 100);
+    const vol = volSlider.value / 100;
+    const finalVol = isDucked ? vol * 0.2 : vol;
+    activeEl.volume = finalVol;
+    updateAudioRouting();
 
     if (autoPlay) {
       activeEl.play().then(() => {
@@ -281,13 +297,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(err => console.warn(err));
     }
 
-    // Broadcast to Live Display
+    // Broadcast to Live Display (Primary Audio Output)
     sync.updateState({
       isPlaying: autoPlay,
       mediaSrc: item.url,
       mediaName: item.title,
       mediaType: currentMode,
       currentTime: 0,
+      volume: finalVol,
       isBlackout: false,
       isLogo: false
     });
@@ -595,6 +612,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Sync listener
   sync.subscribe((type, data) => {
     if (type === 'LIVE_STATUS_CHANGE') {
+      isLiveConnected = Boolean(data.connected);
+      updateAudioRouting();
       if (data.connected) {
         liveDot.classList.add('live');
         btnOpenLive.classList.add('active');
