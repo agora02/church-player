@@ -22,6 +22,30 @@ def get_resource_path(relative_path):
     base_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
     return os.path.join(base_dir, relative_path)
 
+def get_real_desktop_path():
+    try:
+        res = subprocess.run(['powershell', '-NoProfile', '-Command', '[Environment]::GetFolderPath("Desktop")'], capture_output=True, text=True, encoding='utf-8', errors='replace')
+        p = res.stdout.strip()
+        if p and os.path.exists(p):
+            return p
+    except Exception:
+        pass
+    user = os.environ.get('USERPROFILE', '')
+    for candidate in [os.path.join(user, '바탕 화면'), os.path.join(user, 'OneDrive', '바탕 화면'), os.path.join(user, 'OneDrive', 'Desktop'), os.path.join(user, 'Desktop')]:
+        if os.path.exists(candidate):
+            return candidate
+    return os.path.join(user, 'Desktop')
+
+def get_real_startmenu_path():
+    try:
+        res = subprocess.run(['powershell', '-NoProfile', '-Command', '[Environment]::GetFolderPath("Programs")'], capture_output=True, text=True, encoding='utf-8', errors='replace')
+        p = res.stdout.strip()
+        if p and os.path.exists(p):
+            return p
+    except Exception:
+        pass
+    return os.path.join(os.environ.get('APPDATA', ''), 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+
 def create_shortcut(target_path, shortcut_path, icon_path, working_dir):
     vbs_script = f"""
     Set oWS = WScript.CreateObject("WScript.Shell")
@@ -34,13 +58,13 @@ def create_shortcut(target_path, shortcut_path, icon_path, working_dir):
     """
     vbs_file = os.path.join(os.environ.get("TEMP", "C:\\Temp"), "create_shortcut.vbs")
     try:
-        with open(vbs_file, "w", encoding="cp949") as f:
+        with open(vbs_file, "w", encoding="cp949", errors="replace") as f:
             f.write(vbs_script)
         subprocess.run(["cscript", "//nologo", vbs_file], check=False)
         if os.path.exists(vbs_file):
             os.remove(vbs_file)
     except Exception as e:
-        print("Shortcut error:", e)
+        print("Shortcut creation error:", e)
 
 class InstallerAPI:
     def __init__(self):
@@ -87,19 +111,22 @@ class InstallerAPI:
                             pct = 10 + int((idx / total) * 70)
                             self.window.evaluate_js(f"updateProgress({pct}, '파일 복사 중 ({idx + 1}/{total})...')")
 
-                self.window.evaluate_js("updateProgress(85, '바탕화면 바로가기 생성 중...')")
+                self.window.evaluate_js("updateProgress(85, '바탕화면 및 시작 메뉴 바로가기 생성 중...')")
                 exe_path = os.path.join(target_dir, APP_EXE)
                 icon_path = os.path.join(target_dir, "app_icon.ico")
                 if not os.path.exists(icon_path):
                     icon_path = exe_path
 
+                # Real Desktop Shortcut
                 if create_desktop:
-                    desktop = os.path.join(os.environ.get("USERPROFILE", "C:\\"), "Desktop")
+                    desktop = get_real_desktop_path()
                     sc_path = os.path.join(desktop, f"{APP_NAME}.lnk")
                     create_shortcut(exe_path, sc_path, icon_path, target_dir)
 
+                # Real Start Menu Shortcut
                 if create_startmenu:
-                    start_menu = os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs")
+                    start_menu = get_real_startmenu_path()
+                    os.makedirs(start_menu, exist_ok=True)
                     sc_path = os.path.join(start_menu, f"{APP_NAME}.lnk")
                     create_shortcut(exe_path, sc_path, icon_path, target_dir)
 
@@ -125,7 +152,7 @@ def main():
         url=html_url,
         js_api=api,
         width=540,
-        height=450,
+        height=460,
         resizable=False,
         background_color="#0b0d14"
     )
