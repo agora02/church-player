@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHURCH LIVE DISPLAY - 실시간 송출</title>
+  <link rel="icon" type="image/png" href="app_icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000000;
+      cursor: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Fullscreen Main Container -->
+  <div id="liveContainer" class="live-screen-root">
+    <!-- Video Player -->
+    <video id="liveVideo" class="live-fullscreen-media" playsinline></video>
+    <audio id="liveAudio" class="hidden"></audio>
+
+    <!-- Music Mode 60fps Visualizer Canvas -->
+    <canvas id="liveVisualizerCanvas" class="live-fullscreen-canvas hidden"></canvas>
+
+    <!-- Standby / Logo Screen -->
+    <div id="liveStandbyScreen" class="live-standby-fullscreen bg-holy">
+      <div class="live-logo-card">
+        <img src="app_icon.png" alt="Church Logo" class="hero-logo-img">
+        <h1 class="hero-church-name">교회 예배 미디어 시스템</h1>
+        <p class="hero-worship-text">여호와는 나의 목자시니 내게 부족함이 없으리로다</p>
+        <span class="hero-tag">CHURCH MEDIA MASTER</span>
+      </div>
+    </div>
+
+    <!-- Blackout Overlay -->
+    <div id="liveBlackoutOverlay" class="blackout-screen hidden"></div>
+  </div>
+
+  <script src="js/visualizer.js"></script>
+  <script>
+    let hideTimer = null;
+    document.addEventListener('mousemove', () => {
+      document.body.style.cursor = 'default';
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        document.body.style.cursor = 'none';
+      }, 2000);
+    });
+
+    document.addEventListener('dblclick', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F11' || e.key.toLowerCase() === 'f') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    });
+  </script>
+  <script src="js/sync.js"></script>
+  <script src="js/live.js"></script>
+</body>
+</html>

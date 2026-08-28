@@ -1,0 +1,11 @@
+# Build & Cache
+build/
+dist/
+tools/
+__pycache__/
+*.pyc
+*.spec
+crash.log
+mingit.zip
+github_token.txt
+deploy.py

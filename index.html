@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHURCH MEDIA MASTER - Smart Broadcast Studio</title>
+  <link rel="icon" type="image/png" href="app_icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="studio-app">
+  <!-- Top Glass Bar with Monitor Selector & Version Badge -->
+  <header class="studio-topbar">
+    <div class="topbar-brand">
+      <div class="brand-badge-img">
+        <img src="app_icon.png" alt="Logo" class="brand-logo-img">
+      </div>
+      <div class="brand-info">
+        <div class="brand-row">
+          <span class="brand-name">CHURCH STUDIO</span>
+          <span class="pill-badge" id="btnCheckUpdate" title="클릭하여 신규 버전 업데이트 확인">v2.0.0 ✨</span>
+        </div>
+        <span class="brand-meta">교회 스마트 미디어 & 예배 방송 통합 콘솔</span>
+      </div>
+    </div>
+
+    <!-- Center Playback Quick Info Pill -->
+    <div class="center-now-playing">
+      <div class="now-playing-pill" id="nowPlayingPill">
+        <span class="pulse-live-indicator" id="liveDot"></span>
+        <span class="now-playing-title" id="topNowPlayingText">송출 대기 중</span>
+      </div>
+    </div>
+
+    <!-- Topbar Actions: Monitor Picker & Live Stream Toggle -->
+    <div class="topbar-actions">
+      <!-- Target Monitor Picker -->
+      <div class="screen-picker-box">
+        <svg class="screen-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+        <select id="selScreenChoice" class="screen-select" title="송출할 모니터(빔프로젝터/TV)를 선택하세요">
+          <option value="1">모니터 #2 [보조 모니터/프로젝터]</option>
+          <option value="0">모니터 #1 [주 모니터]</option>
+        </select>
+      </div>
+
+      <button id="btnOpenLive" class="btn-glow-primary" title="선택한 모니터로 실시간 화면을 송출합니다">
+        <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" x2="2.01" y1="20" y2="20"/></svg>
+        <span id="btnLiveText">🚀 송출 시작</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Studio Workspace Layout (3 Columns) -->
+  <div class="studio-workspace">
+    
+    <!-- LEFT: Playlist & Media Queue -->
+    <aside class="studio-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title-row">
+          <span class="sidebar-heading">예배 미디어 큐</span>
+          <span class="item-count-badge" id="cueCount">0개</span>
+        </div>
+        <div class="sidebar-quick-actions">
+          <input type="file" id="mediaFileInput" multiple accept="video/*,audio/*" class="hidden">
+          <button id="btnAddFiles" class="btn-subtle" title="미디어 파일 추가">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            <span>추가</span>
+          </button>
+          <button id="btnClearCue" class="btn-subtle text-danger" title="큐 전체 삭제">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto Play Options -->
+      <div class="sidebar-options">
+        <label class="switch-row">
+          <span>종료 시 다음 곡 자동 재생</span>
+          <input type="checkbox" id="chkAutoNext" checked class="apple-switch">
+        </label>
+        <label class="switch-row">
+          <span>현재 미디어 반복</span>
+          <input type="checkbox" id="chkLoopCurrent" class="apple-switch">
+        </label>
+      </div>
+
+      <!-- Queue List -->
+      <div class="queue-scroll-area">
+        <ul id="cueList" class="cue-list">
+          <li class="empty-state-card">
+            <div class="empty-icon-circle">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            </div>
+            <p class="empty-primary">등록된 미디어가 없습니다</p>
+            <p class="empty-sub">파일을 이곳으로 드래그 & 드롭하세요</p>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- CENTER: Main Cinema Screen & Floating Controller -->
+    <section class="studio-center-stage">
+      <!-- Ambient Glow Behind Cinema Viewport -->
+      <div class="ambient-glow" id="ambientGlow"></div>
+
+      <!-- Cinema Screen Container -->
+      <div class="cinema-viewport" id="cinemaViewport">
+        <video id="pgmVideo" class="cinema-media" playsinline></video>
+        <audio id="pgmAudio" class="hidden"></audio>
+        <canvas id="pgmVisualizerCanvas" class="cinema-canvas hidden"></canvas>
+
+        <!-- Standby Artwork Overlay -->
+        <div id="pgmStandbyPlaceholder" class="cinema-standby-screen">
+          <div class="standby-holy-card">
+            <img src="app_icon.png" alt="Logo" class="hero-logo-img">
+            <h2 class="standby-worship-title">여호와는 나의 목자시니</h2>
+            <p class="standby-worship-sub">마음을 정돈하고 거룩한 예배를 준비합니다</p>
+            <div class="standby-tag">CHURCH MEDIA MASTER</div>
+          </div>
+        </div>
+
+        <!-- Emergency Blackout Overlay -->
+        <div id="pgmBlackoutOverlay" class="cinema-blackout-screen hidden"></div>
+      </div>
+
+      <!-- Glass Floating Control Console -->
+      <div class="floating-console">
+        <!-- Scrubber Bar -->
+        <div class="console-timeline">
+          <span id="lblCurrentTime" class="time-stamp active">00:00</span>
+          <div class="scrubber-track-container">
+            <input type="range" id="seekSlider" min="0" max="100" value="0" class="apple-scrubber">
+          </div>
+          <span id="lblTotalTime" class="time-stamp">00:00</span>
+        </div>
+
+        <!-- Transport Buttons Row -->
+        <div class="console-transport-row">
+          <!-- Left: Segment Mode Switcher -->
+          <div class="segment-pill-group">
+            <button id="btnModeVideo" class="segment-pill active">🎬 비디오</button>
+            <button id="btnModeMusic" class="segment-pill">🎵 찬양 BGM</button>
+          </div>
+
+          <!-- Center: Main Play Controls -->
+          <div class="transport-center-cluster">
+            <button id="btnPrevCue" class="btn-transport" title="이전 순서 (P)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></svg>
+            </button>
+            <button id="btnRewind10" class="btn-transport" title="10초 뒤로 (←)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/></svg>
+            </button>
+            <button id="btnPlayPause" class="btn-hero-play" title="재생 / 일시정지 (Space)">
+              <svg id="playIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+            <button id="btnForward10" class="btn-transport" title="10초 앞으로 (→)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg>
+            </button>
+            <button id="btnNextCue" class="btn-transport" title="다음 순서 (N)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></svg>
+            </button>
+          </div>
+
+          <!-- Right: Volume Cluster -->
+          <div class="transport-right-cluster">
+            <div class="volume-capsule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="vol-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              <input type="range" id="volSlider" min="0" max="100" value="100" class="vol-scrubber">
+              <span id="lblVolPercent" class="vol-percent">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Live Broadcast Control & Emergency Panel -->
+    <aside class="studio-right-panel">
+      <!-- Preview Sub Monitor -->
+      <div class="right-card preview-card">
+        <div class="card-header">
+          <span class="card-title">PREVIEW (미리보기)</span>
+          <button id="btnCut" class="btn-cut-action">CUT 송출</button>
+        </div>
+        <div class="preview-mini-viewport">
+          <video id="pvwVideo" class="preview-mini-media" muted></video>
+          <audio id="pvwAudio" class="hidden"></audio>
+          <canvas id="pvwVisualizerCanvas" class="preview-mini-canvas hidden"></canvas>
+          <div id="pvwStandbyPlaceholder" class="preview-mini-standby">
+            <span>미리보기 대기</span>
+          </div>
+        </div>
+        <div class="pvw-label-row">
+          <span id="pvwTitle" class="pvw-filename">선택된 미디어 없음</span>
+        </div>
+      </div>
+
+      <!-- Live Broadcast Quick Switches -->
+      <div class="right-card broadcast-card">
+        <div class="card-header">
+          <span class="card-title">방송실 긴급 스위치</span>
+        </div>
+        <div class="emergency-button-grid">
+          <button id="btnDucking" class="btn-emergency btn-ducking" title="설교/멘트 시 볼륨 20%로 감소 (D)">
+            <svg class="emergency-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <div class="emergency-btn-text">
+              <span class="btn-head">멘트 덕킹</span>
+              <span class="btn-shortcut">단축키 D</span>
+            </div>
+          </button>
+
+          <button id="btnLogoScreen" class="btn-emergency btn-logo" title="대기화면/로고 화면 전환 (L)">
+            <svg class="emergency-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <div class="emergency-btn-text">
+              <span class="btn-head">대기 로고</span>
+              <span class="btn-shortcut">단축키 L</span>
+            </div>
+          </button>
+
+          <button id="btnBlackout" class="btn-emergency btn-blackout" title="긴급 암전 (B)">
+            <svg class="emergency-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
+            <div class="emergency-btn-text">
+              <span class="btn-head">블랙아웃</span>
+              <span class="btn-shortcut">단축키 B</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Visualizer Theme Switcher -->
+      <div class="right-card theme-card">
+        <div class="card-header">
+          <span class="card-title">오디오 비주얼라이저</span>
+        </div>
+        <div class="theme-select-box">
+          <select id="selVisTheme" class="studio-select">
+            <option value="bars">네온 스펙트럼 바</option>
+            <option value="wave">은혜로운 찬양 파형</option>
+            <option value="particles">은하수 펄스 파티클</option>
+            <option value="ambient">앰비언트 글로우</option>
+          </select>
+          <input type="text" id="txtTrackTitle" placeholder="찬양 타이틀 직접 입력" class="studio-input">
+          <button id="btnApplyTitle" class="btn-apply">타이틀 적용</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Glassmorphic Update Modal Dialog -->
+  <div id="updateModal" class="update-modal-backdrop hidden">
+    <div class="update-modal-card">
+      <div class="update-modal-badge">✨ NEW UPDATE</div>
+      <h3 class="update-modal-title" id="updateTitle">새로운 버전이 있습니다!</h3>
+      <p class="update-modal-version" id="updateVersionText">최신 버전: v2.1.0 (현재 v2.0.0)</p>
+      <div class="update-modal-notes" id="updateNotes">
+        신규 기능 및 방송 안정성 개선 사항이 포함되어 있습니다.
+      </div>
+      <div class="update-progress-container hidden" id="updateProgressArea">
+        <div class="update-progress-bar" id="updateProgressBar"></div>
+        <span class="update-progress-label" id="updateProgressLabel">업데이트 패키지를 다운로드 중...</span>
+      </div>
+      <div class="update-modal-actions" id="updateModalActions">
+        <button id="btnStartUpdate" class="btn-update-now">🚀 지금 바로 자동 업데이트</button>
+        <button id="btnCloseUpdateModal" class="btn-update-dismiss">나중에 하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/display-manager.js"></script>
+  <script src="js/visualizer.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
