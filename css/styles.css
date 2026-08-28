@@ -77,12 +77,55 @@ body.studio-app {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  background-color: rgba(13, 15, 23, 0.8);
+  padding: 0 16px;
+  background-color: rgba(13, 15, 23, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 100;
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Custom Window Controls */
+.window-controls-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-subtle);
+}
+.btn-win-ctl {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 160ms var(--ease-out);
+}
+.btn-win-ctl:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.btn-win-ctl:active {
+  transform: scale(0.92);
+}
+.btn-win-ctl svg {
+  width: 14px;
+  height: 14px;
+}
+.btn-win-close:hover {
+  background: #e11d48 !important;
+  color: #ffffff !important;
 }
 
 .topbar-brand {

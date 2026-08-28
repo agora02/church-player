@@ -34,6 +34,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnLiveText = document.getElementById('btnLiveText');
   const selScreenChoice = document.getElementById('selScreenChoice');
 
+  // Custom Window Controls
+  const btnWinMinimize = document.getElementById('btnWinMinimize');
+  const btnWinMaximize = document.getElementById('btnWinMaximize');
+  const btnWinClose = document.getElementById('btnWinClose');
+
+  if (btnWinMinimize) {
+    btnWinMinimize.onclick = () => {
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.minimize_window) {
+        window.pywebview.api.minimize_window();
+      }
+    };
+  }
+  if (btnWinMaximize) {
+    btnWinMaximize.onclick = () => {
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.maximize_window) {
+        window.pywebview.api.maximize_window();
+      }
+    };
+  }
+  if (btnWinClose) {
+    btnWinClose.onclick = () => {
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.close_window) {
+        window.pywebview.api.close_window();
+      }
+    };
+  }
+
   const btnCut = document.getElementById('btnCut');
   const btnDucking = document.getElementById('btnDucking');
   const btnLogoScreen = document.getElementById('btnLogoScreen');

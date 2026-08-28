@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Church Media Master - Native Windows Desktop Application
-Crafted with Emil Kowalski Design Engineering, Multi-Monitor Picker & Auto-Updater
+Crafted with Emil Kowalski Design Engineering, Frameless Custom Titlebar & Auto-Updater
 """
 
 import os
@@ -23,6 +23,27 @@ class DesktopAppAPI:
     def __init__(self):
         self.main_window = None
         self.live_window = None
+
+    def minimize_window(self):
+        if self.main_window:
+            self.main_window.minimize()
+
+    def maximize_window(self):
+        if self.main_window:
+            # Toggle maximize/restore
+            if hasattr(self.main_window, 'is_maximized') and self.main_window.is_maximized:
+                self.main_window.restore()
+                self.main_window.is_maximized = False
+            else:
+                self.main_window.maximize()
+                self.main_window.is_maximized = True
+
+    def close_window(self):
+        if self.live_window:
+            try: self.live_window.destroy()
+            except Exception: pass
+        if self.main_window:
+            self.main_window.destroy()
 
     def get_version(self):
         return updater.get_current_version()
@@ -113,13 +134,15 @@ def main():
     api = DesktopAppAPI()
 
     main_win = webview.create_window(
-        title='CHURCH MEDIA MASTER - 교회 스마트 방송 플레이어 v2.0',
+        title='CHURCH MEDIA MASTER',
         url=main_url,
         js_api=api,
-        width=1280,
-        height=820,
-        min_size=(980, 680),
-        background_color='#090a0f'
+        width=1320,
+        height=840,
+        min_size=(1024, 700),
+        frameless=True,
+        easy_drag=False,
+        background_color='#07080c'
     )
     api.main_window = main_win
 

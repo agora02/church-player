@@ -8,9 +8,10 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="studio-app">
-  <!-- Top Glass Bar with Monitor Selector & Version Badge -->
-  <header class="studio-topbar">
-    <div class="topbar-brand">
+  <!-- Custom Glass Window Titlebar (Drag Region & Window Controls) -->
+  <header class="studio-topbar pywebview-drag-region">
+    <!-- Brand / App Info (Non-drag) -->
+    <div class="topbar-brand no-drag">
       <div class="brand-badge-img">
         <img src="app_icon.png" alt="Logo" class="brand-logo-img">
       </div>
@@ -23,7 +24,7 @@
       </div>
     </div>
 
-    <!-- Center Playback Quick Info Pill -->
+    <!-- Center Playback Quick Info Pill (Drag area) -->
     <div class="center-now-playing">
       <div class="now-playing-pill" id="nowPlayingPill">
         <span class="pulse-live-indicator" id="liveDot"></span>
@@ -31,8 +32,8 @@
       </div>
     </div>
 
-    <!-- Topbar Actions: Monitor Picker & Live Stream Toggle -->
-    <div class="topbar-actions">
+    <!-- Topbar Actions & Custom Window Controls (Non-drag) -->
+    <div class="topbar-actions no-drag">
       <!-- Target Monitor Picker -->
       <div class="screen-picker-box">
         <svg class="screen-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
@@ -46,6 +47,19 @@
         <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" x2="2.01" y1="20" y2="20"/></svg>
         <span id="btnLiveText">🚀 송출 시작</span>
       </button>
+
+      <!-- Custom OS Window Buttons -->
+      <div class="window-controls-cluster">
+        <button id="btnWinMinimize" class="btn-win-ctl" title="최소화">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        </button>
+        <button id="btnWinMaximize" class="btn-win-ctl" title="최대화 / 복원">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>
+        </button>
+        <button id="btnWinClose" class="btn-win-ctl btn-win-close" title="프로그램 닫기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
