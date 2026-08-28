@@ -12,9 +12,9 @@ import tempfile
 import subprocess
 import zipfile
 import shutil
+import ssl
 
-CURRENT_VERSION = "2.0.0"
-# GitHub repo endpoint for church media player releases
+CURRENT_VERSION = "2.1.0"
 GITHUB_REPO_API = "https://api.github.com/repos/agora02/church-player/releases/latest"
 
 def get_current_version():
@@ -23,11 +23,12 @@ def get_current_version():
 def check_update_sync(api_url=GITHUB_REPO_API):
     """Checks GitHub releases API for newer version."""
     try:
+        ctx = ssl._create_unverified_context()
         req = urllib.request.Request(
             api_url,
             headers={'User-Agent': 'ChurchMediaMaster-Updater'}
         )
-        with urllib.request.urlopen(req, timeout=4) as response:
+        with urllib.request.urlopen(req, timeout=5, context=ctx) as response:
             if response.status != 200:
                 return {'has_update': False, 'current_version': CURRENT_VERSION}
             
@@ -35,17 +36,18 @@ def check_update_sync(api_url=GITHUB_REPO_API):
             latest_tag = data.get('tag_name', '').lstrip('v')
             release_notes = data.get('body', '신규 기능 및 성능 개선이 포함되어 있습니다.')
             
-            # Find zip asset
             download_url = None
             for asset in data.get('assets', []):
-                if asset.get('name', '').endswith('.zip') or asset.get('name', '').endswith('.exe'):
+                if asset.get('name', '').endswith('.zip'):
                     download_url = asset.get('browser_download_url')
                     break
 
-            if not download_url and data.get('zipball_url'):
-                download_url = data.get('zipball_url')
+            if not download_url:
+                for asset in data.get('assets', []):
+                    if asset.get('name', '').endswith('.exe'):
+                        download_url = asset.get('browser_download_url')
+                        break
 
-            # Version compare
             if latest_tag and latest_tag > CURRENT_VERSION:
                 return {
                     'has_update': True,
@@ -55,8 +57,7 @@ def check_update_sync(api_url=GITHUB_REPO_API):
                     'download_url': download_url or data.get('html_url')
                 }
     except Exception as e:
-        # Offline or repo not yet published
-        pass
+        print("Update check error:", e)
 
     return {
         'has_update': False,
@@ -68,8 +69,9 @@ def check_update_sync(api_url=GITHUB_REPO_API):
 def apply_update_script(zip_path, target_dir):
     """Creates a temporary batch file to extract and replace the application."""
     bat_content = f"""@echo off
+chcp 65001 > nul
 timeout /t 2 /nobreak > nul
-echo Updating Church Media Master...
+echo Church Media Master 최신 버전으로 업데이트 중...
 powershell -Command "Expand-Archive -Path '{zip_path}' -DestinationPath '{target_dir}' -Force"
 del /f /q "{zip_path}"
 start "" "{os.path.join(target_dir, 'ChurchPlayer.exe')}"
@@ -77,7 +79,7 @@ del "%~f0"
 exit
 """
     temp_bat = os.path.join(tempfile.gettempdir(), 'church_player_updater.bat')
-    with open(temp_bat, 'w', encoding='cp949') as f:
+    with open(temp_bat, 'w', encoding='cp949', errors='replace') as f:
         f.write(bat_content)
     
     subprocess.Popen(['cmd.exe', '/c', temp_bat], shell=False)

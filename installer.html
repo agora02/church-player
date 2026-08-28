@@ -8,9 +8,10 @@
   <style>
     :root {
       --bg: #0b0d14;
-      --card: rgba(18, 24, 38, 0.85);
+      --card: rgba(18, 24, 38, 0.88);
       --border: rgba(255, 255, 255, 0.09);
       --accent: #3b82f6;
+      --danger: #ef4444;
       --text: #f8fafc;
       --muted: #94a3b8;
       --dim: #64748b;
@@ -73,7 +74,7 @@
       margin-top: 2px;
     }
 
-    /* Form Card */
+    /* Card */
     .glass-card {
       background: var(--card);
       backdrop-filter: blur(20px);
@@ -122,6 +123,19 @@
     }
     .btn-browse:hover {
       background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Existing Install Notice */
+    .existing-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: #93c5fd;
     }
 
     /* Options */
@@ -204,10 +218,19 @@
       z-index: 1;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 10px;
       margin-top: 10px;
     }
+    .footer-left {
+      display: flex;
+      gap: 8px;
+    }
+    .footer-right {
+      display: flex;
+      gap: 8px;
+    }
+
     .btn-secondary {
       padding: 8px 16px;
       border-radius: 9px;
@@ -221,6 +244,21 @@
     }
     .btn-secondary:hover {
       background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+    .btn-danger {
+      padding: 8px 14px;
+      border-radius: 9px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 160ms var(--ease);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
       color: #ffffff;
     }
     .btn-primary {
@@ -241,11 +279,13 @@
     .btn-primary:active {
       transform: scale(0.97);
     }
-    .btn-primary:disabled {
+    .btn-primary:disabled, .btn-danger:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
     }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -257,12 +297,16 @@
       <img src="app_icon.png" alt="Church Media Logo" class="logo-img">
       <div class="header-text">
         <h1>Church Media Master Pro</h1>
-        <p>스마트 예배 & 미디어 방송 통합 콘솔 v2.0.0 설치</p>
+        <p id="headerSubText">스마트 예배 & 미디어 방송 통합 콘솔 설치 관리자</p>
       </div>
     </div>
 
     <!-- Form Card -->
     <div class="glass-card">
+      <div id="existingNotice" class="existing-badge hidden">
+        <span>ℹ️ 기존에 설치된 프로그램이 감지되었습니다. 최신 버전으로 업데이트하거나 삭제할 수 있습니다.</span>
+      </div>
+
       <div>
         <label class="field-label">설치 경로</label>
         <div class="path-row">
@@ -281,7 +325,7 @@
           <input type="checkbox" id="chkStartMenu" checked class="apple-switch">
         </label>
         <label class="option-row">
-          <span>설치 완료 후 프로그램 바로 실행</span>
+          <span>작업 완료 후 프로그램 바로 실행</span>
           <input type="checkbox" id="chkRunAfter" checked class="apple-switch">
         </label>
       </div>
@@ -290,24 +334,42 @@
         <div class="progress-track">
           <div class="progress-fill" id="progressFill"></div>
         </div>
-        <span class="status-text" id="statusText">설치 준비 완료. [설치 시작]을 클릭하세요.</span>
+        <span class="status-text" id="statusText">준비 완료. 원하는 작업을 선택하세요.</span>
       </div>
     </div>
   </div>
 
   <!-- Footer Actions -->
   <div class="footer-actions">
-    <button id="btnCancel" class="btn-secondary">취소</button>
-    <button id="btnInstall" class="btn-primary">🚀 설치 시작</button>
+    <div class="footer-left">
+      <button id="btnUninstall" class="btn-danger hidden" title="프로그램 및 바로가기를 완전히 삭제합니다">🗑️ 프로그램 삭제</button>
+    </div>
+    <div class="footer-right">
+      <button id="btnCancel" class="btn-secondary">닫기</button>
+      <button id="btnInstall" class="btn-primary">🚀 설치 시작</button>
+    </div>
   </div>
 
   <script>
-    async function initDir() {
+    async function checkState() {
       const txtInstallDir = document.getElementById('txtInstallDir');
-      if (window.pywebview && window.pywebview.api && window.pywebview.api.get_default_dir) {
+      const btnInstall = document.getElementById('btnInstall');
+      const btnUninstall = document.getElementById('btnUninstall');
+      const existingNotice = document.getElementById('existingNotice');
+      const headerSubText = document.getElementById('headerSubText');
+
+      if (window.pywebview && window.pywebview.api) {
         try {
           const dir = await window.pywebview.api.get_default_dir();
           if (dir) txtInstallDir.value = dir;
+
+          const isInstalled = await window.pywebview.api.check_installed(txtInstallDir.value);
+          if (isInstalled) {
+            existingNotice.classList.remove('hidden');
+            btnUninstall.classList.remove('hidden');
+            btnInstall.textContent = '🔄 최신 버전으로 업데이트';
+            headerSubText.textContent = '기존 설치본 관리 (업데이트 및 완전 삭제)';
+          }
         } catch (e) {}
       }
     }
@@ -319,17 +381,21 @@
       const chkStartMenu = document.getElementById('chkStartMenu');
       const chkRunAfter = document.getElementById('chkRunAfter');
       const btnInstall = document.getElementById('btnInstall');
+      const btnUninstall = document.getElementById('btnUninstall');
       const btnCancel = document.getElementById('btnCancel');
       const progressFill = document.getElementById('progressFill');
       const statusText = document.getElementById('statusText');
 
-      window.addEventListener('pywebviewready', initDir);
-      setTimeout(initDir, 300);
+      window.addEventListener('pywebviewready', checkState);
+      setTimeout(checkState, 300);
 
       btnBrowse.onclick = async () => {
         if (window.pywebview && window.pywebview.api && window.pywebview.api.choose_folder) {
           const chosen = await window.pywebview.api.choose_folder();
-          if (chosen) txtInstallDir.value = chosen;
+          if (chosen) {
+            txtInstallDir.value = chosen;
+            checkState();
+          }
         }
       };
 
@@ -339,11 +405,13 @@
         }
       };
 
+      // Install / Update action
       btnInstall.onclick = async () => {
         btnInstall.disabled = true;
-        btnInstall.textContent = '설치 진행 중...';
+        btnInstall.textContent = '처리 진행 중...';
         btnCancel.disabled = true;
         btnBrowse.disabled = true;
+        btnUninstall.disabled = true;
 
         if (window.pywebview && window.pywebview.api) {
           await window.pywebview.api.start_install({
@@ -352,6 +420,23 @@
             create_startmenu: chkStartMenu.checked,
             run_after: chkRunAfter.checked
           });
+        }
+      };
+
+      // Uninstall action
+      btnUninstall.onclick = async () => {
+        if (!confirm('정말로 Church Media Master를 컴퓨터에서 완전히 삭제하시겠습니까?\n(바탕화면 및 시작 메뉴 바로가기도 함께 정리됩니다)')) {
+          return;
+        }
+
+        btnInstall.disabled = true;
+        btnCancel.disabled = true;
+        btnBrowse.disabled = true;
+        btnUninstall.disabled = true;
+        btnUninstall.textContent = '삭제 진행 중...';
+
+        if (window.pywebview && window.pywebview.api) {
+          await window.pywebview.api.start_uninstall(txtInstallDir.value);
         }
       };
 

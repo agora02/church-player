@@ -10,6 +10,7 @@ import traceback
 import threading
 import urllib.request
 import tempfile
+import shutil
 import webview
 import updater
 
@@ -57,12 +58,18 @@ class DesktopAppAPI:
         
         def run_update():
             try:
+                import ssl
+                ctx = ssl._create_unverified_context()
                 temp_zip = os.path.join(tempfile.gettempdir(), 'ChurchPlayer_Latest.zip')
-                urllib.request.urlretrieve(download_url, temp_zip)
+                
+                req = urllib.request.Request(download_url, headers={'User-Agent': 'ChurchMediaMaster-Updater'})
+                with urllib.request.urlopen(req, context=ctx) as resp, open(temp_zip, 'wb') as out_f:
+                    shutil.copyfileobj(resp, out_f)
+                    
                 target_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
                 updater.apply_update_script(temp_zip, target_dir)
             except Exception as e:
-                print('Update error:', e)
+                print('Update download/apply error:', e)
 
         thread = threading.Thread(target=run_update, daemon=True)
         thread.start()
