@@ -1,0 +1,5 @@
+# -*- coding: utf-8 -*-
+"""
+Audio Visualizer Engine using Web Audio API & HTML5 Canvas
+Fixed AudioContext initialization and real-time frequency analysis
+"""

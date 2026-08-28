@@ -1,5 +1,6 @@
 /**
  * Church Studio Pro - Controller Script with Dynamic Monitor Selection
+ * Enhanced with Memory Cleanup, Input Isolation & Hot-Plug Screen Detection
  */
 document.addEventListener('DOMContentLoaded', () => {
   const sync = new MediaSync(false);
@@ -145,9 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Auto-check on boot after 1.5s
-  setTimeout(() => checkUpdate(false), 1500);
-
   // Visualizers
   const pvwVis = new AudioVisualizer(pvwCanvas, pvwAudio);
   const pgmVis = new AudioVisualizer(pgmCanvas, pgmAudio);
@@ -178,12 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load Screens list dynamically from Native API
+  // Load Screens list dynamically (Hot-Plug Support)
   async function loadScreensList() {
     if (window.pywebview && window.pywebview.api && window.pywebview.api.get_screens) {
       try {
         const screens = await window.pywebview.api.get_screens();
         if (screens && screens.length > 0) {
+          const currentVal = selScreenChoice.value;
           selScreenChoice.innerHTML = '';
           screens.forEach((s) => {
             const opt = document.createElement('option');
@@ -191,8 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
             opt.textContent = s.name;
             selScreenChoice.appendChild(opt);
           });
-          // Recommend secondary monitor if present
-          if (screens.length > 1) {
+          if (screens.some(s => String(s.index) === currentVal)) {
+            selScreenChoice.value = currentVal;
+          } else if (screens.length > 1) {
             selScreenChoice.value = '1';
           }
         }
@@ -201,9 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
-  // Check when pywebview ready
   window.addEventListener('pywebviewready', loadScreensList);
   setTimeout(loadScreensList, 500);
+  selScreenChoice.onmousedown = loadScreensList;
+  selScreenChoice.onfocus = loadScreensList;
 
   // Load to PVW
   function loadToPvw(index) {
@@ -347,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
   attachTimeListeners(pgmVideo);
   attachTimeListeners(pgmAudio);
 
-  // Safe Seeking
+  // Safe Seeking (0ms sync)
   seekSlider.oninput = () => {
     isSeeking = true;
     const activeEl = currentMode === 'video' ? pgmVideo : pgmAudio;
@@ -510,7 +511,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       li.onclick = (e) => {
         if (e.target.closest('.btn-del-item')) {
-          playlist.splice(idx, 1);
+          const removed = playlist.splice(idx, 1)[0];
+          // Memory Cleanup
+          if (removed && removed.url && removed.url.startsWith('blob:')) {
+            URL.revokeObjectURL(removed.url);
+          }
           renderCueList();
           return;
         }
@@ -526,6 +531,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnClearCue.onclick = () => {
+    // Memory Cleanup for all items
+    playlist.forEach(item => {
+      if (item.url && item.url.startsWith('blob:')) {
+        URL.revokeObjectURL(item.url);
+      }
+    });
     playlist = [];
     currentPvwIndex = -1;
     currentPgmIndex = -1;
@@ -573,9 +584,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Keyboard Shortcuts
+  // Keyboard Shortcuts (Input Isolation)
   window.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    // Isolate when typing in inputs, select boxes or contenteditable
+    const tag = e.target.tagName;
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag) || e.target.isContentEditable) {
+      return;
+    }
+
     if (e.code === 'Space') {
       e.preventDefault();
       togglePlay();

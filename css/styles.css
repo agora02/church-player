@@ -569,6 +569,7 @@ body.studio-app {
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at center, #101c2e 0%, #060910 100%);
+  transition: opacity 300ms var(--ease-out);
 }
 .standby-holy-card {
   display: flex;
@@ -615,6 +616,7 @@ body.studio-app {
   inset: 0;
   background-color: #000000;
   z-index: 20;
+  transition: opacity 300ms var(--ease-out);
 }
 
 /* Floating Console Controller */

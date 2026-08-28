@@ -1,10 +1,11 @@
-﻿/**
+/**
  * Audio Visualizer Engine using Web Audio API & HTML5 Canvas
+ * Enhanced with automatic AudioContext lifecycle & real frequency analysis
  */
 class AudioVisualizer {
   constructor(canvasElement, audioElement) {
     this.canvas = canvasElement;
-    this.ctx = canvasElement.getContext('2d');
+    this.ctx = canvasElement ? canvasElement.getContext('2d') : null;
     this.audio = audioElement;
     this.audioCtx = null;
     this.analyser = null;
@@ -29,15 +30,19 @@ class AudioVisualizer {
   }
 
   initAudioContext() {
-    if (this.isInitialized) return;
+    if (this.isInitialized && this.analyser) return;
     try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      this.audioCtx = new AudioContextClass();
-      this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 256; // 128 data bins
-      this.analyser.smoothingTimeConstant = 0.8;
+      if (!this.audioCtx) {
+        this.audioCtx = new AudioContextClass();
+      }
+      if (!this.analyser) {
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 256; // 128 data bins
+        this.analyser.smoothingTimeConstant = 0.8;
+      }
 
-      if (this.audio) {
+      if (this.audio && !this.source) {
         this.source = this.audioCtx.createMediaElementSource(this.audio);
         this.source.connect(this.analyser);
         this.analyser.connect(this.audioCtx.destination);
@@ -46,7 +51,7 @@ class AudioVisualizer {
       this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
       this.isInitialized = true;
     } catch (err) {
-      console.warn('[Visualizer] Web Audio API init warning (user gesture may be needed):', err);
+      console.warn('[Visualizer] Web Audio API initialization notice:', err);
     }
   }
 
@@ -75,6 +80,7 @@ class AudioVisualizer {
   }
 
   start() {
+    this.initAudioContext();
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
@@ -126,7 +132,6 @@ class AudioVisualizer {
       hasAudioData = avgFreq > 0;
     }
 
-    // Mock ambient animation if no audio playing
     const time = Date.now() * 0.002;
 
     switch (this.theme) {
@@ -160,12 +165,11 @@ class AudioVisualizer {
 
     for (let i = 0; i < barCount; i++) {
       let val = 0;
-      if (hasAudio) {
+      if (hasAudio && this.dataArray) {
         const binIndex = Math.floor((i / barCount) * (this.dataArray.length * 0.75));
         val = this.dataArray[binIndex] / 255;
       } else {
-        // Idle animation
-        val = (Math.sin(time + i * 0.2) * 0.5 + 0.5) * 0.2 + 0.05;
+        val = (Math.sin(time + i * 0.2) * 0.5 + 0.5) * 0.15 + 0.05;
       }
 
       const barHeight = Math.max(8, val * h * 0.55);
@@ -176,9 +180,12 @@ class AudioVisualizer {
       ctx.shadowColor = colors[1];
       ctx.shadowBlur = val > 0.4 ? 15 : 5;
       
-      // Rounded bar top
       ctx.beginPath();
-      ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+      } else {
+        ctx.rect(x, y, barWidth, barHeight);
+      }
       ctx.fill();
 
       // Top highlight cap
@@ -201,8 +208,7 @@ class AudioVisualizer {
 
       for (let i = 0; i <= points; i++) {
         const x = (i / points) * w;
-        let amp = (hasAudio ? (avgFreq / 255) * 120 : 30) * (1 + layer * 0.3);
-        let freq = 0.02 + layer * 0.01;
+        let amp = (hasAudio ? (avgFreq / 255) * 120 : 25) * (1 + layer * 0.3);
         let y = midY + Math.sin(i * 0.15 + time * (1 + layer * 0.5)) * amp * Math.sin((i / points) * Math.PI);
 
         if (i === 0) ctx.moveTo(x, y);
@@ -236,7 +242,8 @@ class AudioVisualizer {
 
       const px = p.x * w;
       const py = p.y * h;
-      const radius = p.radius * (1 + (hasAudio ? (this.dataArray[idx % this.dataArray.length] / 255) * 1.5 : 0));
+      const extra = (hasAudio && this.dataArray) ? (this.dataArray[idx % this.dataArray.length] / 255) * 1.5 : 0;
+      const radius = p.radius * (1 + extra);
 
       ctx.beginPath();
       ctx.arc(px, py, radius, 0, Math.PI * 2);
@@ -271,7 +278,6 @@ class AudioVisualizer {
     ctx.arc(centerX, centerY, baseRadius + pulse + 80, 0, Math.PI * 2);
     ctx.fill();
 
-    // Inner glowing ring
     ctx.beginPath();
     ctx.arc(centerX, centerY, baseRadius + pulse * 0.5, 0, Math.PI * 2);
     ctx.strokeStyle = '#ffffff';

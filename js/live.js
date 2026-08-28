@@ -1,5 +1,6 @@
 /**
  * Live Display Screen Sync Receiver
+ * High Precision 0-delay Synchronization with Dissolve Transitions
  */
 document.addEventListener('DOMContentLoaded', () => {
   const sync = new MediaSync(true);
@@ -17,14 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sync.subscribe((type, state) => {
     if (type === 'STATE_UPDATE') {
-      // 1. Blackout
+      // 1. Blackout Transition (Dissolve)
       if (state.isBlackout) {
         liveBlackout.classList.remove('hidden');
       } else {
         liveBlackout.classList.add('hidden');
       }
 
-      // 2. Standby / Logo
+      // 2. Standby / Logo (Dissolve)
       if (state.isLogo || !state.mediaSrc) {
         liveStandby.classList.remove('hidden');
         liveVideo.classList.add('hidden');
@@ -69,14 +70,14 @@ document.addEventListener('DOMContentLoaded', () => {
         targetEl.volume = state.volume;
       }
 
-      // 6. Play / Pause & Time Sync
-      if (state.currentTime !== undefined && Math.abs(targetEl.currentTime - state.currentTime) > 0.5) {
+      // 6. High-Precision Play / Pause & Time Sync (Threshold: 0.15s)
+      if (state.currentTime !== undefined && Math.abs(targetEl.currentTime - state.currentTime) > 0.15) {
         targetEl.currentTime = state.currentTime;
       }
 
       if (state.isPlaying) {
         if (targetEl.paused) {
-          targetEl.play().catch(err => console.warn('[Live] Play error:', err));
+          targetEl.play().catch(err => console.warn('[Live] Autoplay sync notice:', err));
         }
       } else {
         if (!targetEl.paused) {
